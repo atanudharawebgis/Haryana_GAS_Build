@@ -122,9 +122,7 @@ const isValidExtent = (extent) => {
 // GEOSERVER CONFIG
 // ============================================
 const GEOSERVER_CONFIG = {
-  // baseUrl: "https://gis.mapgeoid.com/geoserver",
-  baseUrl: "https://gis.hcgonline.co.in/geoserver/wms",
-
+  baseUrl: "https://gis.mapgeoid.com/geoserver",
   get wfsUrl() {
     return `${this.baseUrl}/wfs`;
   },
@@ -144,89 +142,6 @@ const DEFAULT_WFS_PARAMS = {
   request: "GetFeature",
   outputFormat: "application/json",
   srsName: "EPSG:4326",
-};
-
-const UTILITY_TRACE_LAYER_KEYS = [
-  "Assembly",
-  "Device",
-  "junction",
-  "line",
-  "structurejunction",
-];
-
-const START_TRACE_ICON_SRC = `data:image/svg+xml;utf8,${encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34">
-    <path d="M10 4v24" stroke="#1e3a8a" stroke-width="2.4" stroke-linecap="round"/>
-    <path d="M11 5h14l-4 5 4 5H11z" fill="#d32f2f" stroke="#8b1e1e" stroke-width="1.4" stroke-linejoin="round"/>
-    <circle cx="10" cy="29" r="3.2" fill="#1e3a8a"/>
-  </svg>`,
-)}`;
-
-const BARRIER_TRACE_ICON_SRC = `data:image/svg+xml;utf8,${encodeURIComponent(
-  `<svg xmlns="http://www.w3.org/2000/svg" width="34" height="34" viewBox="0 0 34 34">
-    <circle cx="17" cy="17" r="11" fill="#ffffff" stroke="#d32f2f" stroke-width="2.4"/>
-    <path d="M12 12l10 10M22 12L12 22" stroke="#d32f2f" stroke-width="3" stroke-linecap="round"/>
-  </svg>`,
-)}`;
-
-const getFeatureIdentifierInfo = (properties = {}) => {
-  const keys = Object.keys(properties);
-  const idCandidates = ["objectid", "gid", "fid", "id", "globalid"];
-
-  for (const candidate of idCandidates) {
-    const matchedKey = keys.find(
-      (key) =>
-        key.toLowerCase() === candidate &&
-        properties[key] !== null &&
-        properties[key] !== undefined &&
-        properties[key] !== "",
-    );
-    if (matchedKey) {
-      return {
-        field: matchedKey,
-        value: properties[matchedKey],
-      };
-    }
-  }
-
-  const numericKey = keys.find(
-    (key) =>
-      !["the_geom", "geom", "shape", "geometry"].includes(key.toLowerCase()) &&
-      properties[key] !== null &&
-      properties[key] !== undefined &&
-      properties[key] !== "" &&
-      !isNaN(Number(properties[key])),
-  );
-
-  if (numericKey) {
-    return {
-      field: numericKey,
-      value: properties[numericKey],
-    };
-  }
-
-  return {
-    field: null,
-    value: null,
-  };
-};
-
-const getStableTraceFeatureId = (
-  layerKey,
-  properties = {},
-  geometry = null,
-) => {
-  const identifier = getFeatureIdentifierInfo(properties);
-  if (identifier.field) {
-    return `${layerKey}:${identifier.field}:${identifier.value}`;
-  }
-
-  const coords = geometry?.coordinates;
-  const geometryKey = Array.isArray(coords)
-    ? JSON.stringify(coords).slice(0, 80)
-    : "no-geometry";
-
-  return `${layerKey}:geometry:${geometry?.type || "unknown"}:${geometryKey}`;
 };
 
 const VirtualTable = ({
@@ -506,16 +421,6 @@ function App({ onBackToHome, onNavigateToDashboard }) {
 
   const [queryFieldValues, setQueryFieldValues] = useState({}); // { clauseId: [values] }
   const [queryFieldValuesLoading, setQueryFieldValuesLoading] = useState({});
-  const [utilityTraceType, setUtilityTraceType] = useState("connected");
-  const [utilityTraceMode, setUtilityTraceMode] = useState("idle");
-  const [utilityTraceStartFeature, setUtilityTraceStartFeature] =
-    useState(null);
-  const [utilityTraceBarriers, setUtilityTraceBarriers] = useState([]);
-  const [utilityTraceResults, setUtilityTraceResults] = useState([]);
-  const [utilityTraceSummary, setUtilityTraceSummary] = useState({});
-  const [utilityTraceRunning, setUtilityTraceRunning] = useState(false);
-  const [utilityTraceTolerance, setUtilityTraceTolerance] = useState(5);
-  const [utilityTraceMaxSteps, setUtilityTraceMaxSteps] = useState(5000);
 
   const [selectedRows, setSelectedRows] = useState([]); // selected row ids
   const [tableViewMode, setTableViewMode] = useState("all");
@@ -550,12 +455,10 @@ function App({ onBackToHome, onNavigateToDashboard }) {
   const [allPopupFeatures, setAllPopupFeatures] = useState([]);
   const [expandedAttributes, setExpandedAttributes] = useState({});
   const selectionLayerRef = useRef(null);
-  const utilityTraceMarkerLayerRef = useRef(null);
   const selectedRowsRef = useRef([]);
   const isDrawingActiveRef = useRef(false); // ADD THIS
   const isPopupClosingRef = useRef(false);
   const isZoomingToFeatureRef = useRef(false);
-  const utilityTraceModeRef = useRef("idle");
   const [popupMinimized, setPopupMinimized] = useState(false);
 
   // asset secarc near me
@@ -576,202 +479,57 @@ function App({ onBackToHome, onNavigateToDashboard }) {
 
   //  WMS layers
   const [layerGroups, setLayerGroups] = useState({
-    // test: {
-    //   name: "Test",
-    //   visible: true,
-    //   expanded: false,
-    //   children: {
-    //     test: {
-    //       name: "USA Population",
-    //       visible: true,
-    //       wmsLayer: "topp:states",
-    //     },
-    //     Road: {
-    //       name: "Road",
-    //       visible: true,
-    //       wmsLayer: "sf:roads",
-    //     },
-    //   },
-    // },
-    Gas: {
-      name: "Boundary",
+    test: {
+      name: "Test",
       visible: true,
       expanded: false,
       children: {
-        ga_boundary: {
-          name: "GA_Boundary",
+        test: {
+          name: "USA Population",
           visible: true,
-          wmsLayer: "haryanagas:ga_boundary",
+          wmsLayer: "topp:states",
         },
-        ca_boundary: {
-          name: "CA Boundary",
-          visible: true,
-          wmsLayer: "haryanagas:ca_boundary",
-        },
-        cng_boundary: {
-          name: "CNG_Boundary",
-          visible: true,
-          wmsLayer: "haryanagas:cng_boundary",
-        },
-        // line: {
-        //   name: "Pipeline Line",
-        //   visible: true,
-        //   wmsLayer: "GAS_DATA:main_pipelineline",
-        // },
-        // structureboundary: {
-        //   name: "Structure Boundary",
-        //   visible: true,
-        //   wmsLayer: "GAS_DATA:main_structureboundary",
-        // },
-        // structurejunction: {
-        //   name: "Structure Junction",
-        //   visible: true,
-        //   wmsLayer: "GAS_DATA:main_structurejunction",
-        // },
-      },
-    },
-    CNG_Station: {
-      name: "CNG Station",
-      visible: true,
-      expanded: false,
-      children: {
-        cng_station: {
-          name: "CNG Station",
-          visible: true,
-          wmsLayer: "haryanagas:cng_station",
-        },
-        compressor: {
-          name: "Compressor",
-          visible: true,
-          wmsLayer: "haryanagas:compressor",
-        },
-        cgs: {
-          name: "CGS",
-          visible: true,
-          wmsLayer: "haryanagas:cgs",
-        },
-        dispenser: {
-          name: "Dispenser",
-          visible: true,
-          wmsLayer: "haryanagas:dispenser",
-        },
-        odorizer: {
-          name: "Odorizer",
-          visible: true,
-          wmsLayer: "haryanagas:odorizer",
-        },
-        cascade: {
-          name: "Cascade",
-          visible: true,
-          wmsLayer: "haryanagas:cascade",
-        },
-      },
-    },
-    customer: {
-      name: "Customer",
-      visible: true,
-      expanded: false,
-      children: {
-        INC: {
-          name: "INC",
-          visible: true,
-          wmsLayer: "haryanagas:ci",
-        },
-        dpngSurvey: {
-          name: "DPNG Survey",
-          visible: true,
-          wmsLayer: "haryanagas:dpngsurvey",
-        },
-      },
-    },
-    other: {
-      name: "Other",
-      visible: true,
-      expanded: false,
-      children: {
-        pole_marker: {
-          name: "Pole Marker",
-          visible: true,
-          wmsLayer: "haryanagas:pole_marker",
-        },
-        StoneMarker: {
-          name: "Stone Marker",
-          visible: true,
-          wmsLayer: "haryanagas:rcc_marker",
-        },
-        road: {
+        Road: {
           name: "Road",
           visible: true,
-          wmsLayer: "haryanagas:road",
-        },
-        wall: {
-          name: "Wall",
-          visible: true,
-          wmsLayer: "haryanagas:wall",
-        },
-        house: {
-          name: "House",
-          visible: true,
-          wmsLayer: "haryanagas:house",
-        },
-        connection_pit: {
-          name: "Connection Pit",
-          visible: true,
-          wmsLayer: "haryanagas:connection_pit",
-        },
-        survey: {
-          name: "Survey",
-          visible: true,
-          wmsLayer: "haryanagas:dpngsurvey",
-        },
-        electric_pole: {
-          name: "Electric Pole",
-          visible: true,
-          wmsLayer: "haryanagas:electric_pole",
-        },
-        offset: {
-          name: "Offset",
-          visible: true,
-          wmsLayer: "haryanagas:offset_tbl",
-        },
-        depth: {
-          name: "Depth",
-          visible: true,
-          wmsLayer: "haryanagas:depth",
+          wmsLayer: "sf:roads",
         },
       },
     },
-    SteelLine: {
-      name: "Steel Line",
+    Gas: {
+      name: "Gas Data",
       visible: true,
       expanded: false,
       children: {
-        steel_pipelines: {
-          name: "Steel Pipelines",
+        Assembly: {
+          name: "Pipeline Assembly",
           visible: true,
-          wmsLayer: "haryanagas:steel_pipelines",
+          wmsLayer: "GAS_DATA:main_pipelineassembly",
         },
-        tlp: {
-          name: "TLP",
+        Device: {
+          name: "Pipeline Device",
           visible: true,
-          wmsLayer: "haryanagas:tlp",
+          wmsLayer: "GAS_DATA:main_pipelinedevice",
         },
-      },
-    },
-    MDPELine: {
-      name: "MDPE Line",
-      visible: true,
-      expanded: false,
-      children: {
-        mdpe_pipelines: {
-          name: "MDPE Pipeline",
+        junction: {
+          name: "Pipeline Junction",
           visible: true,
-          wmsLayer: "haryanagas:mdpe_pipelines",
+          wmsLayer: "GAS_DATA:main_pipelinejunction",
         },
-        valve: {
-          name: "Valve",
+        line: {
+          name: "Pipeline Line",
           visible: true,
-          wmsLayer: "haryanagas:valve",
+          wmsLayer: "GAS_DATA:main_pipelineline",
+        },
+        structureboundary: {
+          name: "Structure Boundary",
+          visible: true,
+          wmsLayer: "GAS_DATA:main_structureboundary",
+        },
+        structurejunction: {
+          name: "Structure Junction",
+          visible: true,
+          wmsLayer: "GAS_DATA:main_structurejunction",
         },
       },
     },
@@ -895,37 +653,11 @@ function App({ onBackToHome, onNavigateToDashboard }) {
     });
     selectionLayerRef.current = selectionLayer;
 
-    const utilityTraceMarkerLayer = new VectorLayer({
-      source: new VectorSource(),
-      name: "utility-trace-markers",
-      style: (feature) => {
-        const markerType = feature.get("markerType");
-        return new Style({
-          image: new Icon({
-            src:
-              markerType === "barrier"
-                ? BARRIER_TRACE_ICON_SRC
-                : START_TRACE_ICON_SRC,
-            anchor: [0.5, 1],
-            scale: 1,
-          }),
-        });
-      },
-      zIndex: 1002,
-    });
-    utilityTraceMarkerLayerRef.current = utilityTraceMarkerLayer;
-
     const wmsLayers = createWMSLayers();
 
     const map = new Map({
       target: mapRef.current,
-      layers: [
-        osmLayer,
-        ...wmsLayers,
-        selectionLayer,
-        utilityTraceMarkerLayer,
-        markerLayer,
-      ],
+      layers: [osmLayer, ...wmsLayers, selectionLayer, markerLayer],
       controls: [],
       view: new View({
         center: fromLonLat([76.993869, 28.448841]),
@@ -1183,75 +915,6 @@ function App({ onBackToHome, onNavigateToDashboard }) {
 
       const allFeatures = results.flat();
 
-      if (
-        utilityTraceModeRef.current === "selecting" ||
-        utilityTraceModeRef.current === "barrier"
-      ) {
-        const startFeature = allFeatures.find((feature) =>
-          UTILITY_TRACE_LAYER_KEYS.includes(feature.layerKey),
-        );
-
-        if (!startFeature) {
-          alert("No traceable utility asset found at clicked location.");
-          if (selectionLayerRef.current) {
-            selectionLayerRef.current.getSource().clear();
-            selectionLayerRef.current.changed();
-          }
-          if (utilityTraceModeRef.current === "selecting") {
-            setUtilityTraceStartFeature(null);
-          }
-          setUtilityTraceMode("idle");
-          return;
-        }
-
-        const identifier = getFeatureIdentifierInfo(startFeature.properties);
-        const selectedTraceFeature = {
-          ...startFeature,
-          id: getStableTraceFeatureId(
-            startFeature.layerKey,
-            startFeature.properties,
-            startFeature.geometry,
-          ),
-          identifier,
-          markerCoordinate: evt.coordinate,
-        };
-
-        if (utilityTraceModeRef.current === "barrier") {
-          setUtilityTraceBarriers((prev) => {
-            if (prev.some((item) => item.id === selectedTraceFeature.id)) {
-              return prev;
-            }
-            return [...prev, selectedTraceFeature];
-          });
-        } else {
-          setUtilityTraceStartFeature(selectedTraceFeature);
-        }
-        setUtilityTraceMode("idle");
-
-        if (
-          selectedTraceFeature.geometry &&
-          selectedTraceFeature.geometry.coordinates &&
-          selectionLayerRef.current
-        ) {
-          const geojsonFormat = new GeoJSON();
-          const olFeature = geojsonFormat.readFeature(
-            {
-              type: "Feature",
-              geometry: selectedTraceFeature.geometry,
-            },
-            {
-              dataProjection: "EPSG:4326",
-              featureProjection: "EPSG:3857",
-            },
-          );
-
-          selectionLayerRef.current.getSource().clear();
-          selectionLayerRef.current.getSource().addFeature(olFeature);
-          selectionLayerRef.current.changed();
-        }
-        return;
-      }
-
       // Yeh pura purana block DELETE karo - opening brace se leke closing brace tak:
 
       if (allFeatures.length > 0) {
@@ -1458,33 +1121,6 @@ function App({ onBackToHome, onNavigateToDashboard }) {
   useEffect(() => {
     layerGroupsRef.current = layerGroups;
   }, [layerGroups]);
-  useEffect(() => {
-    utilityTraceModeRef.current = utilityTraceMode;
-  }, [utilityTraceMode]);
-
-  useEffect(() => {
-    const markerSource = utilityTraceMarkerLayerRef.current?.getSource?.();
-    if (!markerSource) return;
-
-    markerSource.clear();
-
-    if (utilityTraceStartFeature?.markerCoordinate) {
-      const startMarker = new Feature({
-        geometry: new Point(utilityTraceStartFeature.markerCoordinate),
-      });
-      startMarker.set("markerType", "start");
-      markerSource.addFeature(startMarker);
-    }
-
-    utilityTraceBarriers.forEach((barrier) => {
-      if (!barrier.markerCoordinate) return;
-      const barrierMarker = new Feature({
-        geometry: new Point(barrier.markerCoordinate),
-      });
-      barrierMarker.set("markerType", "barrier");
-      markerSource.addFeature(barrierMarker);
-    });
-  }, [utilityTraceStartFeature, utilityTraceBarriers]);
 
   // Update coordinate format listener
   useEffect(() => {
@@ -1715,7 +1351,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
             visibleLayers.push({
               name: layer.name,
               wmsLayer: layer.wmsLayer,
-              wmsUrl: layer.wmsUrl || "https://gis.hcgonline.co.in/geoserver/wms",
+              wmsUrl: layer.wmsUrl || "https://gis.mapgeoid.com/geoserver/wms", // ✅ YE ADD KARO
             });
           }
         }
@@ -1852,7 +1488,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
             collectGroupLayers(layer.children);
           } else if (layer.wmsLayer) {
             const url =
-              layer.wmsUrl || "https://gis.hcgonline.co.in/geoserver/wms";
+              layer.wmsUrl || "https://gis.mapgeoid.com/geoserver/wms";
             if (!byUrl[url]) byUrl[url] = [];
             byUrl[url].push({
               key,
@@ -3066,7 +2702,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
       // Multiple layers share kar rahe hain - naya alag TileLayer banao
       const layerUrl =
         olLayer.getSource().getUrls?.()?.[0] ||
-        "https://gis.hcgonline.co.in/geoserver/wms";
+        "https://gis.mapgeoid.com/geoserver/wms";
 
       const newTileLayer = new TileLayer({
         source: new TileWMS({
@@ -3386,355 +3022,6 @@ function App({ onBackToHome, onNavigateToDashboard }) {
     }
     setMeasurements([]);
     stopMeasurement();
-  };
-
-  const highlightTraceFeatures = (traceFeatures = []) => {
-    if (!selectionLayerRef.current) return;
-
-    const selectionSource = selectionLayerRef.current.getSource();
-    selectionSource.clear();
-
-    const olFeatures = traceFeatures
-      .map((feature) => feature.olFeature?.clone?.())
-      .filter(Boolean);
-
-    if (olFeatures.length > 0) {
-      selectionSource.addFeatures(olFeatures);
-    }
-    selectionLayerRef.current.changed();
-  };
-
-  const clearUtilityTrace = () => {
-    setUtilityTraceMode("idle");
-    setUtilityTraceStartFeature(null);
-    setUtilityTraceBarriers([]);
-    setUtilityTraceResults([]);
-    setUtilityTraceSummary({});
-    if (selectionLayerRef.current) {
-      selectionLayerRef.current.getSource().clear();
-      selectionLayerRef.current.changed();
-    }
-  };
-
-  const zoomToUtilityTraceResults = () => {
-    if (!mapInstanceRef.current || utilityTraceResults.length === 0) return;
-
-    const features = utilityTraceResults
-      .map((item) => item.olFeature)
-      .filter(Boolean);
-
-    if (features.length === 0) return;
-
-    let combinedExtent = null;
-    features.forEach((feature) => {
-      const geometry = feature.getGeometry?.();
-      if (!geometry) return;
-      const extent = geometry.getExtent();
-      if (!extent || !extent.every((v) => isFinite(v))) return;
-      if (!combinedExtent) {
-        combinedExtent = [...extent];
-      } else {
-        combinedExtent[0] = Math.min(combinedExtent[0], extent[0]);
-        combinedExtent[1] = Math.min(combinedExtent[1], extent[1]);
-        combinedExtent[2] = Math.max(combinedExtent[2], extent[2]);
-        combinedExtent[3] = Math.max(combinedExtent[3], extent[3]);
-      }
-    });
-
-    if (combinedExtent) {
-      mapInstanceRef.current.getView().fit(combinedExtent, {
-        padding: [80, 80, 80, 80],
-        duration: 800,
-        maxZoom: 18,
-      });
-    }
-  };
-
-  const fetchUtilityTraceLayerFeatures = async (layerKey) => {
-    const wmsLayerName = layerExtentsRef.current[layerKey];
-    if (!wmsLayerName) return [];
-
-    const params = new URLSearchParams({
-      ...DEFAULT_WFS_PARAMS,
-      typeName: wmsLayerName,
-    });
-
-    const response = await fetch(`${GEOSERVER_CONFIG.wfsUrl}?${params}`);
-    if (!response.ok) {
-      throw new Error(`Unable to load ${wmsLayerName}`);
-    }
-
-    const data = await response.json();
-    const sourceFeatures = data.features || [];
-    if (sourceFeatures.length === 0) return [];
-
-    const geojsonFormat = new GeoJSON();
-    const olFeatures = geojsonFormat.readFeatures(data, {
-      dataProjection: "EPSG:4326",
-      featureProjection: "EPSG:3857",
-    });
-
-    return sourceFeatures.map((feature, index) => {
-      const identifier = getFeatureIdentifierInfo(feature.properties);
-
-      return {
-        id: getStableTraceFeatureId(
-          layerKey,
-          feature.properties,
-          feature.geometry,
-        ),
-        layerKey,
-        layerName: layerNamesRef.current[layerKey] || wmsLayerName,
-        properties: feature.properties || {},
-        geometry: feature.geometry,
-        olFeature: olFeatures[index],
-        identifier,
-      };
-    });
-  };
-
-  const buildUtilityTraceGraph = (traceFeatures, tolerance = 5) => {
-    const nodes = [];
-    const recordsById = new Map();
-
-    const getDistance = (a, b) => {
-      const dx = a[0] - b[0];
-      const dy = a[1] - b[1];
-      return Math.sqrt(dx * dx + dy * dy);
-    };
-
-    const findOrCreateNode = (coordinate) => {
-      if (!coordinate) return null;
-      const existingIndex = nodes.findIndex(
-        (node) => getDistance(node.coordinate, coordinate) <= tolerance,
-      );
-      if (existingIndex >= 0) return existingIndex;
-
-      nodes.push({
-        coordinate,
-        pointIds: new Set(),
-        lineIds: new Set(),
-        outLineIds: new Set(),
-        inLineIds: new Set(),
-      });
-      return nodes.length - 1;
-    };
-
-    traceFeatures.forEach((feature) => {
-      const geometry = feature.olFeature?.getGeometry?.();
-      if (!geometry) return;
-
-      const geometryType = geometry.getType();
-      const record = {
-        ...feature,
-        geometryType,
-      };
-
-      if (geometryType === "LineString") {
-        const coordinates = geometry.getCoordinates();
-        if (coordinates.length < 2) return;
-
-        const startNode = findOrCreateNode(coordinates[0]);
-        const endNode = findOrCreateNode(coordinates[coordinates.length - 1]);
-
-        record.kind = "line";
-        record.startNode = startNode;
-        record.endNode = endNode;
-
-        nodes[startNode].lineIds.add(record.id);
-        nodes[startNode].outLineIds.add(record.id);
-        nodes[endNode].lineIds.add(record.id);
-        nodes[endNode].inLineIds.add(record.id);
-      } else if (geometryType === "MultiLineString") {
-        const lineParts = geometry.getCoordinates();
-        if (!lineParts.length || lineParts[0].length < 2) return;
-
-        const firstLine = lineParts[0];
-        const startNode = findOrCreateNode(firstLine[0]);
-        const endNode = findOrCreateNode(firstLine[firstLine.length - 1]);
-
-        record.kind = "line";
-        record.startNode = startNode;
-        record.endNode = endNode;
-
-        nodes[startNode].lineIds.add(record.id);
-        nodes[startNode].outLineIds.add(record.id);
-        nodes[endNode].lineIds.add(record.id);
-        nodes[endNode].inLineIds.add(record.id);
-      } else {
-        let coordinate = null;
-        if (geometryType === "Point") {
-          coordinate = geometry.getCoordinates();
-        } else if (geometryType === "MultiPoint") {
-          coordinate = geometry.getCoordinates()[0];
-        }
-
-        if (!coordinate) return;
-
-        const nodeIndex = findOrCreateNode(coordinate);
-        record.kind = "point";
-        record.node = nodeIndex;
-        nodes[nodeIndex].pointIds.add(record.id);
-      }
-
-      recordsById.set(record.id, record);
-    });
-
-    return { nodes, recordsById };
-  };
-
-  const executeUtilityTrace = async () => {
-    if (!utilityTraceStartFeature) {
-      alert("Please select a starting point first.");
-      return;
-    }
-
-    const effectiveTraceType = "connected";
-    setUtilityTraceRunning(true);
-
-    try {
-      const layerResponses = await Promise.all(
-        UTILITY_TRACE_LAYER_KEYS.map((layerKey) =>
-          fetchUtilityTraceLayerFeatures(layerKey),
-        ),
-      );
-
-      const allTraceFeatures = layerResponses.flat();
-      const { nodes, recordsById } = buildUtilityTraceGraph(
-        allTraceFeatures,
-        Number(utilityTraceTolerance) || 5,
-      );
-
-      const barrierFeatureIds = new Set(utilityTraceBarriers.map((b) => b.id));
-      const barrierNodeIds = new Set();
-      utilityTraceBarriers.forEach((barrier) => {
-        const barrierRecord = recordsById.get(barrier.id);
-        if (!barrierRecord) return;
-        if (barrierRecord.kind === "line") {
-          barrierNodeIds.add(barrierRecord.startNode);
-          barrierNodeIds.add(barrierRecord.endNode);
-        } else if (barrierRecord.kind === "point") {
-          barrierNodeIds.add(barrierRecord.node);
-        }
-      });
-
-      const startRecord = recordsById.get(utilityTraceStartFeature.id);
-      if (!startRecord) {
-        throw new Error(
-          "Starting point could not be resolved in trace layers.",
-        );
-      }
-
-      const visitedNodes = new Set();
-      const visitedFeatures = new Set();
-      const nodeQueue = [];
-      let traversedSteps = 0;
-
-      const addFeature = (featureId) => {
-        if (!featureId || visitedFeatures.has(featureId)) return;
-        visitedFeatures.add(featureId);
-      };
-
-      const enqueueNode = (nodeIndex) => {
-        if (
-          nodeIndex === null ||
-          nodeIndex === undefined ||
-          visitedNodes.has(nodeIndex) ||
-          barrierNodeIds.has(nodeIndex)
-        ) {
-          return;
-        }
-        visitedNodes.add(nodeIndex);
-        nodeQueue.push(nodeIndex);
-      };
-
-      if (startRecord.kind === "line") {
-        addFeature(startRecord.id);
-        if (effectiveTraceType === "downstream") {
-          enqueueNode(startRecord.endNode);
-        } else if (effectiveTraceType === "upstream") {
-          enqueueNode(startRecord.startNode);
-        } else {
-          enqueueNode(startRecord.startNode);
-          enqueueNode(startRecord.endNode);
-        }
-      } else {
-        addFeature(startRecord.id);
-        enqueueNode(startRecord.node);
-      }
-
-      while (nodeQueue.length > 0) {
-        traversedSteps += 1;
-        if (traversedSteps > (Number(utilityTraceMaxSteps) || 5000)) {
-          console.warn("Utility trace stopped due to max step limit.");
-          break;
-        }
-
-        const nodeIndex = nodeQueue.shift();
-        const node = nodes[nodeIndex];
-        if (!node) continue;
-
-        node.pointIds.forEach((featureId) => {
-          if (!barrierFeatureIds.has(featureId)) {
-            addFeature(featureId);
-          }
-        });
-
-        if (effectiveTraceType === "connected") {
-          node.lineIds.forEach((lineId) => {
-            if (barrierFeatureIds.has(lineId)) return;
-            addFeature(lineId);
-            const lineRecord = recordsById.get(lineId);
-            if (!lineRecord) return;
-            enqueueNode(lineRecord.startNode);
-            enqueueNode(lineRecord.endNode);
-          });
-        } else if (effectiveTraceType === "downstream") {
-          node.outLineIds.forEach((lineId) => {
-            if (barrierFeatureIds.has(lineId)) return;
-            addFeature(lineId);
-            const lineRecord = recordsById.get(lineId);
-            if (!lineRecord) return;
-            enqueueNode(lineRecord.endNode);
-          });
-        } else if (effectiveTraceType === "upstream") {
-          node.inLineIds.forEach((lineId) => {
-            if (barrierFeatureIds.has(lineId)) return;
-            addFeature(lineId);
-            const lineRecord = recordsById.get(lineId);
-            if (!lineRecord) return;
-            enqueueNode(lineRecord.startNode);
-          });
-        }
-      }
-
-      const resultFeatures = Array.from(visitedFeatures)
-        .map((featureId) => recordsById.get(featureId))
-        .filter(Boolean);
-
-      const summary = resultFeatures.reduce((acc, feature) => {
-        acc[feature.layerName] = (acc[feature.layerName] || 0) + 1;
-        return acc;
-      }, {});
-
-      if (utilityTraceBarriers.length > 0) {
-        summary.Barriers = utilityTraceBarriers.length;
-      }
-
-      setUtilityTraceResults(resultFeatures);
-      setUtilityTraceSummary(summary);
-      highlightTraceFeatures(resultFeatures);
-
-      if (resultFeatures.length === 0) {
-        alert("No connected utility features found for this trace.");
-      }
-    } catch (error) {
-      console.error("Utility trace error:", error);
-      alert(`Trace failed: ${error.message}`);
-    } finally {
-      setUtilityTraceRunning(false);
-      setUtilityTraceMode("idle");
-    }
   };
 
   // Asset search
@@ -4159,7 +3446,6 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                 {activeTools.includes("draw") && <Tab label="Draw" />}
                 {activeTools.includes("print") && <Tab label="Print" />}
                 {activeTools.includes("measure") && <Tab label="Measure" />}
-                {activeTools.includes("utilityTrace") && <Tab label="Trace" />}
                 {activeTools.includes("filter") && <Tab label="Filter" />}
                 {activeTools.includes("assetSearch") && (
                   <Tab label="Asset Search" />
@@ -4233,7 +3519,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
             <Box
               sx={{
                 flex: 1,
-                overflow: "auto",
+                overflow: "hidden",
                 display: "flex",
                 flexDirection: "column",
               }}
@@ -4482,7 +3768,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                                       {nestedLayer.name}
                                     </Typography>
                                     <img
-                                      src={`${nestedLayer.wmsUrl || "https://gis.hcgonline.co.in/geoserver/wms"}?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&LAYER=${nestedLayer.wmsLayer}`}
+                                      src={`${nestedLayer.wmsUrl || "https://gis.mapgeoid.com/geoserver/wms"}?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&LAYER=${nestedLayer.wmsLayer}`}
                                       alt={nestedLayer.name}
                                       style={{
                                         display: "block",
@@ -4510,7 +3796,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                                   {layer.name}
                                 </Typography>
                                 <img
-                                  src={`${layer.wmsUrl || "https://gis.hcgonline.co.in/geoserver/wms"}?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&LAYER=${layer.wmsLayer}`}
+                                  src={`${layer.wmsUrl || "https://gis.mapgeoid.com/geoserver/wms"}?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&LAYER=${layer.wmsLayer}`}
                                   alt={layer.name}
                                   style={{
                                     display: "block",
@@ -4563,7 +3849,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                     Drawing Tools
                   </Typography>
 
-                  <Box sx={{ mb: 1.5 }}>
+                  <Box sx={{ mb: 2 }}>
                     <Typography
                       variant="body2"
                       sx={{ mb: 0.5, fontWeight: 500 }}
@@ -5342,379 +4628,10 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                     </Box>
                   </Box>
                 </Box>
-              ) : activeTools.includes("utilityTrace") &&
-                activeTab ===
-                  2 +
-                    ["draw", "print", "measure", "utilityTrace"]
-                      .filter((t) => activeTools.includes(t))
-                      .indexOf("utilityTrace") ? (
-                <Box
-                  sx={{
-                    p: 2,
-                    display: "flex",
-                    flexDirection: "column",
-                    height: "calc(100vh - 160px)",
-                    overflowY: "auto",
-                    overflowX: "hidden",
-                    minHeight: 0,
-                  }}
-                >
-                  <Typography
-                    variant="h6"
-                    sx={{ mb: 1.5, fontWeight: 600, color: "#1976d2" }}
-                  >
-                    Connected Trace
-                  </Typography>
-
-                  <Paper
-                    sx={{
-                      p: 1.25,
-                      mb: 1.5,
-                      bgcolor: "#e3f2fd",
-                      border: "1px solid #bbdefb",
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{ fontSize: 12, color: "#1976d2", fontWeight: 600 }}
-                    >
-                      Connected trace mode active hai.
-                    </Typography>
-                    <Typography
-                      variant="caption"
-                      sx={{ fontSize: 11, color: "#555" }}
-                    >
-                      Start point par flag aur barrier par cross map par dikhai
-                      dega.
-                    </Typography>
-                  </Paper>
-
-                  <Box sx={{ mb: 1.5 }}>
-                    <Typography
-                      variant="body2"
-                      sx={{ mb: 0.5, fontWeight: 500 }}
-                    >
-                      Barriers
-                    </Typography>
-                    <Box
-                      sx={{
-                        p: 1.25,
-                        borderRadius: 1,
-                        border: "1px solid #d0d7de",
-                        bgcolor: "white",
-                        maxHeight: 110,
-                        overflow: "auto",
-                      }}
-                    >
-                      {utilityTraceBarriers.length === 0 ? (
-                        <Typography
-                          variant="caption"
-                          sx={{ fontSize: 11, color: "#888" }}
-                        >
-                          No barriers selected
-                        </Typography>
-                      ) : (
-                        utilityTraceBarriers.map((barrier) => (
-                          <Paper
-                            key={barrier.id}
-                            sx={{
-                              p: 0.75,
-                              mb: 0.75,
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              bgcolor: "#f5f5f5",
-                            }}
-                          >
-                            <Box sx={{ minWidth: 0 }}>
-                              <Typography
-                                variant="body2"
-                                noWrap
-                                sx={{ fontSize: 12, color: "#1976d2" }}
-                              >
-                                {barrier.layerName}
-                              </Typography>
-                              <Typography
-                                variant="caption"
-                                sx={{ fontSize: 10, color: "#666" }}
-                              >
-                                {barrier.identifier.field
-                                  ? `${barrier.identifier.field}: ${barrier.identifier.value}`
-                                  : barrier.id}
-                              </Typography>
-                            </Box>
-                            <IconButton
-                              size="small"
-                              onClick={() =>
-                                setUtilityTraceBarriers((prev) =>
-                                  prev.filter((item) => item.id !== barrier.id),
-                                )
-                              }
-                              sx={{ color: "#f44336" }}
-                            >
-                              <CloseIcon fontSize="small" />
-                            </IconButton>
-                          </Paper>
-                        ))
-                      )}
-                    </Box>
-                  </Box>
-
-                  <Box
-                    sx={{
-                      mb: 1.5,
-                      p: 1.25,
-                      borderRadius: 1,
-                      border: "1px solid #d0d7de",
-                      bgcolor: "white",
-                    }}
-                  >
-                    <Typography
-                      variant="body2"
-                      sx={{ fontWeight: 500, mb: 0.5 }}
-                    >
-                      Starting Point
-                    </Typography>
-                    {utilityTraceStartFeature ? (
-                      <>
-                        <Typography
-                          variant="body2"
-                          sx={{
-                            fontSize: 12,
-                            color: "#1976d2",
-                            fontWeight: 600,
-                          }}
-                        >
-                          {utilityTraceStartFeature.layerName}
-                        </Typography>
-                        <Typography
-                          variant="caption"
-                          sx={{ fontSize: 11, color: "#555" }}
-                        >
-                          {utilityTraceStartFeature.identifier.field
-                            ? `${utilityTraceStartFeature.identifier.field}: ${utilityTraceStartFeature.identifier.value}`
-                            : "Picked from map"}
-                        </Typography>
-                      </>
-                    ) : (
-                      <Typography
-                        variant="caption"
-                        sx={{ fontSize: 11, color: "#888" }}
-                      >
-                        No starting point selected
-                      </Typography>
-                    )}
-                  </Box>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      alignItems: "flex-start",
-                      gap: 1,
-                      mb: 1.5,
-                    }}
-                  >
-                    <Button
-                      size="small"
-                      variant={
-                        utilityTraceMode === "selecting"
-                          ? "contained"
-                          : "outlined"
-                      }
-                      startIcon={<AdsClickIcon />}
-                      onClick={() => setUtilityTraceMode("selecting")}
-                      sx={{
-                        minWidth: 150,
-                        borderColor: "#1976d2",
-                        color:
-                          utilityTraceMode === "selecting"
-                            ? "white"
-                            : "#1976d2",
-                        bgcolor:
-                          utilityTraceMode === "selecting"
-                            ? "#1976d2"
-                            : "transparent",
-                        "&:hover": {
-                          bgcolor:
-                            utilityTraceMode === "selecting"
-                              ? "#115293"
-                              : "#e3f2fd",
-                        },
-                      }}
-                    >
-                      {utilityTraceMode === "selecting"
-                        ? "Click On Map..."
-                        : "Start Point"}
-                    </Button>
-                    <Button
-                      size="small"
-                      variant={
-                        utilityTraceMode === "barrier"
-                          ? "contained"
-                          : "outlined"
-                      }
-                      startIcon={<FilterAltIcon />}
-                      onClick={() => setUtilityTraceMode("barrier")}
-                      sx={{
-                        minWidth: 150,
-                        borderColor: "#ef6c00",
-                        color:
-                          utilityTraceMode === "barrier" ? "white" : "#ef6c00",
-                        bgcolor:
-                          utilityTraceMode === "barrier"
-                            ? "#ef6c00"
-                            : "transparent",
-                        "&:hover": {
-                          bgcolor:
-                            utilityTraceMode === "barrier"
-                              ? "#e65100"
-                              : "#fff3e0",
-                        },
-                      }}
-                    >
-                      {utilityTraceMode === "barrier"
-                        ? "Pick Barrier On Map..."
-                        : "Barrier"}
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="contained"
-                      startIcon={<SearchIcon />}
-                      onClick={() => {
-                        setUtilityTraceType("connected");
-                        executeUtilityTrace();
-                      }}
-                      disabled={
-                        utilityTraceRunning || !utilityTraceStartFeature
-                      }
-                      sx={{
-                        minWidth: 150,
-                        bgcolor: "#2e7d32",
-                        "&:hover": { bgcolor: "#1b5e20" },
-                      }}
-                    >
-                      {utilityTraceRunning ? "Running Trace..." : "Run Trace"}
-                    </Button>
-                  </Box>
-
-                  <Typography
-                    variant="body2"
-                    sx={{ mb: 1, fontWeight: 500, flexShrink: 0 }}
-                  >
-                    Trace Results ({utilityTraceResults.length})
-                  </Typography>
-
-                  <Box
-                    sx={{
-                      minHeight: 120,
-                      overflow: "auto",
-                      mb: 1.5,
-                    }}
-                  >
-                    {utilityTraceResults.length === 0 ? (
-                      <Typography
-                        variant="caption"
-                        sx={{ fontSize: 11, color: "#888" }}
-                      >
-                        No trace results yet
-                      </Typography>
-                    ) : (
-                      Object.entries(utilityTraceSummary).map(
-                        ([label, count]) => (
-                          <Paper
-                            key={label}
-                            sx={{
-                              p: 1,
-                              mb: 1,
-                              display: "flex",
-                              justifyContent: "space-between",
-                              alignItems: "center",
-                              bgcolor: "#f5f5f5",
-                            }}
-                          >
-                            <Typography variant="body2" sx={{ fontSize: 12 }}>
-                              {label}
-                            </Typography>
-                            <Typography
-                              variant="body2"
-                              sx={{
-                                fontSize: 12,
-                                fontWeight: 600,
-                                color: "#1976d2",
-                              }}
-                            >
-                              {count}
-                            </Typography>
-                          </Paper>
-                        ),
-                      )
-                    )}
-                  </Box>
-
-                  <Box
-                    sx={{
-                      display: "flex",
-                      flexDirection: "column",
-                      gap: 1,
-                      alignItems: "flex-start",
-                      flexShrink: 0,
-                    }}
-                  >
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={zoomToUtilityTraceResults}
-                      disabled={utilityTraceResults.length === 0}
-                      sx={{
-                        minWidth: 150,
-                        borderColor: "#1976d2",
-                        color: "#1976d2",
-                      }}
-                    >
-                      Zoom To Results
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      onClick={() => {
-                        setUtilityTraceBarriers([]);
-                        clearUtilityTrace();
-                      }}
-                      sx={{
-                        minWidth: 150,
-                        borderColor: "#ff9800",
-                        color: "#ff9800",
-                      }}
-                    >
-                      Clear
-                    </Button>
-                    <Button
-                      size="small"
-                      variant="outlined"
-                      startIcon={<CloseIcon />}
-                      onClick={() => {
-                        clearUtilityTrace();
-                        setActiveTools(
-                          activeTools.filter((t) => t !== "utilityTrace"),
-                        );
-                        setActiveTab(0);
-                      }}
-                      sx={{
-                        minWidth: 150,
-                        borderColor: "#f44336",
-                        color: "#f44336",
-                        "&:hover": { bgcolor: "#ffebee" },
-                      }}
-                    >
-                      Close
-                    </Button>
-                  </Box>
-                </Box>
               ) : activeTools.includes("filter") &&
                 activeTab ===
                   2 +
-                    ["draw", "print", "measure", "utilityTrace", "filter"]
+                    ["draw", "print", "measure", "filter"]
                       .filter((t) => activeTools.includes(t))
                       .indexOf("filter") ? (
                 // FILTER TAB
@@ -6534,14 +5451,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
               ) : activeTools.includes("assetSearch") &&
                 activeTab ===
                   2 +
-                    [
-                      "draw",
-                      "print",
-                      "measure",
-                      "utilityTrace",
-                      "filter",
-                      "assetSearch",
-                    ]
+                    ["draw", "print", "measure", "filter", "assetSearch"]
                       .filter((t) => activeTools.includes(t))
                       .indexOf("assetSearch") ? (
                 <Box
@@ -6904,7 +5814,6 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                       "draw",
                       "print",
                       "measure",
-                      "utilityTrace",
                       "filter",
                       "assetSearch",
                       "query",
@@ -7341,7 +6250,6 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                       "draw",
                       "print",
                       "measure",
-                      "utilityTrace",
                       "filter",
                       "assetSearch",
                       "query",
@@ -7678,7 +6586,6 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                       "draw",
                       "print",
                       "measure",
-                      "utilityTrace",
                       "filter",
                       "assetSearch",
                       "query",
@@ -8079,49 +6986,6 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                   <IconButton
                     size="small"
                     onClick={() => {
-                      setUtilityTraceType("connected");
-                      if (!activeTools.includes("utilityTrace")) {
-                        setActiveTools([...activeTools, "utilityTrace"]);
-                      }
-                      const traceIndex =
-                        2 +
-                        ["draw", "print", "measure", "utilityTrace"]
-                          .filter(
-                            (t) =>
-                              activeTools.includes(t) || t === "utilityTrace",
-                          )
-                          .indexOf("utilityTrace");
-                      setActiveTab(traceIndex);
-                      setDrawerOpen(true);
-                    }}
-                    sx={{
-                      bgcolor: "white",
-                      border: "1px solid #1976d2",
-                      width: 28,
-                      height: 28,
-                      "&:hover": { bgcolor: "#f5f5f5" },
-                    }}
-                  >
-                    <TravelExploreIcon
-                      sx={{ color: "#1976d2", fontSize: 16 }}
-                    />
-                  </IconButton>
-                  <Typography variant="caption" sx={{ fontSize: "10px" }}>
-                    Trace
-                  </Typography>
-                </Box>
-
-                <Box
-                  sx={{
-                    display: "flex",
-                    flexDirection: "column",
-                    alignItems: "center",
-                    gap: 0.3,
-                  }}
-                >
-                  <IconButton
-                    size="small"
-                    onClick={() => {
                       if (!activeTools.includes("print")) {
                         setActiveTools([...activeTools, "print"]);
                       }
@@ -8170,7 +7034,6 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                           "draw",
                           "print",
                           "measure",
-                          "utilityTrace",
                           "filter",
                           "assetSearch",
                           "query",
@@ -8217,7 +7080,6 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                           "draw",
                           "print",
                           "measure",
-                          "utilityTrace",
                           "filter",
                           "assetSearch",
                           "query",
@@ -8262,7 +7124,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                       }
                       const filterIndex =
                         2 +
-                        ["draw", "print", "measure", "utilityTrace", "filter"]
+                        ["draw", "print", "measure", "filter"]
                           .filter(
                             (t) => activeTools.includes(t) || t === "filter",
                           )
@@ -8302,14 +7164,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                       }
                       const assetIndex =
                         2 +
-                        [
-                          "draw",
-                          "print",
-                          "measure",
-                          "utilityTrace",
-                          "filter",
-                          "assetSearch",
-                        ]
+                        ["draw", "print", "measure", "filter", "assetSearch"]
                           .filter(
                             (t) =>
                               activeTools.includes(t) || t === "assetSearch",
@@ -8375,7 +7230,6 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                           "draw",
                           "print",
                           "measure",
-                          "utilityTrace",
                           "filter",
                           "assetSearch",
                           "query",
@@ -10226,4 +9080,4 @@ if (typeof document !== "undefined") {
 // export default React.memo(App);
 export default React.memo(App);
 // export default App;
-// Final 
+// Final

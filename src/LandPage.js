@@ -29,7 +29,7 @@ import {
 } from "@mui/icons-material";
 
 // Import logos
-import hcgLogo from "./assets/HCG-logo-1.png";
+import hcgLogo from "./assets/logo.png";
 import mapgeoidLogo from "./assets/logo.png";
 
 const NeonNetworkBackground = () => {
@@ -403,9 +403,9 @@ const HaryanaGasPortal = ({
               <Box
                 component="img"
                 src={hcgLogo}
-                alt="Haryana City Gas Logo"
+                alt="Mapgeoid City Gas Logo"
                 sx={{
-                  width: "80px",
+                  width: "30px",
                   objectFit: "contain",
                   borderRadius: "8px",
                   background: "white",
@@ -421,7 +421,7 @@ const HaryanaGasPortal = ({
                   letterSpacing: "-0.01em",
                 }}
               >
-                MapGeoid CITY GAS
+                BlueView
               </Typography>
             </Box>
 
@@ -530,7 +530,7 @@ const HaryanaGasPortal = ({
                 WebkitTextFillColor: "transparent",
               }}
             >
-              MapGeoid City Gas GIS Portal
+               City Gas GIS Portal
             </Typography>
           </Box>
 
@@ -678,7 +678,7 @@ const HaryanaGasPortal = ({
                 sx={{
                   display: "flex",
                   justifyContent: "center",
-                  marginBottom: "2rem",
+                  marginBottom: "1rem",
                 }}
               >
                 <Box
@@ -686,8 +686,8 @@ const HaryanaGasPortal = ({
                   src={hcgLogo}
                   alt="HCG Logo"
                   sx={{
-                    width: "auto",
-                    height: "auto",
+                    width: 300,
+                    height: 50,
                     objectFit: "contain",
                   }}
                 />
@@ -805,20 +805,7 @@ const HaryanaGasPortal = ({
                     variant="outlined"
                     required
                     disabled={loading}
-                    // InputProps={{
-                    //   endAdornment: (
-                    //     <InputAdornment position="end">
-                    //       <IconButton
-                    //         onClick={() => setShowPassword(!showPassword)}
-                    //         edge="end"
-                    //         sx={{ color: "#64748b" }}
-                    //       >
-                    //         {showPassword ? <VisibilityOff /> : <Visibility />}
-                    //       </IconButton>
-                    //     </InputAdornment>
-
-                    //   ),
-                    // }}
+                    
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         borderRadius: "8px",
@@ -958,7 +945,7 @@ const HaryanaGasPortal = ({
                   src={hcgLogo}
                   alt="HCG Logo"
                   sx={{
-                    width: "auto",
+                    width: 100,
                     height: "auto",
                     objectFit: "contain",
                   }}

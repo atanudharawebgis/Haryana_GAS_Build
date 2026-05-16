@@ -45,7 +45,7 @@ function UserManagement({ onBackToHome }) {
       id: 1,
       employeeId: "HG001",
       name: "Rajesh Kumar",
-      email: "rajesh.kumar@haryanagas.com",
+      email: "rajesh.kumar@mapgeoid.com",
       role: "Admin",
       status: "Active",
       department: "Operations",
@@ -55,7 +55,7 @@ function UserManagement({ onBackToHome }) {
       id: 2,
       employeeId: "HG002",
       name: "Priya Sharma",
-      email: "priya.sharma@haryanagas.com",
+      email: "priya.sharma@mapgeoid.com",
       role: "Manager",
       status: "Active",
       department: "Technical",
@@ -65,7 +65,7 @@ function UserManagement({ onBackToHome }) {
       id: 3,
       employeeId: "HG003",
       name: "Amit Singh",
-      email: "amit.singh@haryanagas.com",
+      email: "amit.singh@mapgeoid.com",
       role: "User",
       status: "Inactive",
       department: "Sales",
@@ -75,7 +75,7 @@ function UserManagement({ onBackToHome }) {
       id: 4,
       employeeId: "HG004",
       name: "Neha Gupta",
-      email: "neha.gupta@haryanagas.com",
+      email: "neha.gupta@mapgeoid.com",
       role: "User",
       status: "Active",
       department: "Support",
@@ -85,7 +85,7 @@ function UserManagement({ onBackToHome }) {
       id: 5,
       employeeId: "HG005",
       name: "Vikram Yadav",
-      email: "vikram.yadav@haryanagas.com",
+      email: "vikram.yadav@mapgeoid.com",
       role: "Manager",
       status: "Active",
       department: "Operations",
@@ -95,7 +95,7 @@ function UserManagement({ onBackToHome }) {
       id: 6,
       employeeId: "HG006",
       name: "Suman Verma",
-      email: "suman.verma@haryanagas.com",
+      email: "suman.verma@mapgeoid.com",
       role: "User",
       status: "Active",
       department: "Technical",
@@ -105,7 +105,7 @@ function UserManagement({ onBackToHome }) {
       id: 7,
       employeeId: "HG007",
       name: "Rahul Malhotra",
-      email: "rahul.malhotra@haryanagas.com",
+      email: "rahul.malhotra@mapgeoid.com",
       role: "Manager",
       status: "Active",
       department: "Sales",
@@ -115,7 +115,7 @@ function UserManagement({ onBackToHome }) {
       id: 8,
       employeeId: "HG008",
       name: "Kavita Rani",
-      email: "kavita.rani@haryanagas.com",
+      email: "kavita.rani@mapgeoid.com",
       role: "User",
       status: "Inactive",
       department: "Support",
@@ -125,7 +125,7 @@ function UserManagement({ onBackToHome }) {
       id: 9,
       employeeId: "HG009",
       name: "Deepak Chauhan",
-      email: "deepak.chauhan@haryanagas.com",
+      email: "deepak.chauhan@mapgeoid.com",
       role: "Admin",
       status: "Active",
       department: "Operations",
@@ -135,7 +135,7 @@ function UserManagement({ onBackToHome }) {
       id: 10,
       employeeId: "HG010",
       name: "Anjali Kapoor",
-      email: "anjali.kapoor@haryanagas.com",
+      email: "anjali.kapoor@mapgeoid.com",
       role: "User",
       status: "Active",
       department: "Technical",
@@ -293,7 +293,7 @@ function UserManagement({ onBackToHome }) {
             <HomeIcon />
           </IconButton>
           <Typography variant="h5" sx={{ fontWeight: "bold", color: "white" }}>
-            User Management - Haryana Gas
+            User Management - mapgeoid Gas
           </Typography>
         </Toolbar>
       </AppBar>

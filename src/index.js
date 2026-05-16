@@ -66,6 +66,11 @@
 
 // ============================================================================================
 
+// for Dashnoard
+import 'react-grid-layout/css/styles.css';
+import 'react-resizable/css/styles.css';
+// ============================================================================================
+
 import React, { useState } from "react";
 import ReactDOM from "react-dom/client";
 import "./index.css";
@@ -75,7 +80,7 @@ import "./index.css";
 import LandPage from "./LandPage";
 import MapApp from "./OpenLayer";
 import Dashboard from "./Dashboard";
-import UserManagement from "./UserManagement"
+import UserManagement from "./UserManagement";
 
 const root = ReactDOM.createRoot(document.getElementById("root"));
 
@@ -90,21 +95,25 @@ const AppRouter = () => {
         <LandPage
           onNavigateToMap={() => setCurrentPage("map")}
           onNavigateToDashboard={() => setCurrentPage("dashboard")}
-          onNavigateToUsers={() => setCurrentPage('users')}
+          onNavigateToUsers={() => setCurrentPage("users")}
         />
       </div>
 
       <div style={{ display: currentPage === "map" ? "block" : "none" }}>
-        <MapApp onBackToHome={() => setCurrentPage("landing")}
-        onNavigateToDashboard={() => setCurrentPage("dashboard")}
+        <MapApp
+          onBackToHome={() => setCurrentPage("landing")}
+          onNavigateToDashboard={() => setCurrentPage("dashboard")}
         />
       </div>
 
-      <div style={{ display: currentPage === "dashboard" ? "block" : "none" }}>
-        <Dashboard onBackToHome={() => setCurrentPage("landing")}
-        onNavigateToMap={() => setCurrentPage("map")}
+      {currentPage === "dashboard" && (
+        <Dashboard
+          role="admin"
+          isActive={currentPage === "dashboard"}
+          onBackToHome={() => setCurrentPage("landing")}
+          onBackToMap={() => setCurrentPage("map")}
         />
-      </div>
+      )}
 
       <div style={{ display: currentPage === "users" ? "block" : "none" }}>
         <UserManagement onBackToHome={() => setCurrentPage("landing")} />
