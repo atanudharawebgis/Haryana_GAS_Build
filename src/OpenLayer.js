@@ -105,6 +105,7 @@ import GeoJSON from "ol/format/GeoJSON";
 import Draw from "ol/interaction/Draw";
 import { getLength, getArea } from "ol/sphere";
 import { LineString, Polygon } from "ol/geom"; // ADD THIS
+// import hcgLogo from "./assets/HCG-logo-1.png";
 
 const isValidExtent = (extent) => {
   if (!extent || extent.length !== 4) return false;
@@ -1715,7 +1716,8 @@ function App({ onBackToHome, onNavigateToDashboard }) {
             visibleLayers.push({
               name: layer.name,
               wmsLayer: layer.wmsLayer,
-              wmsUrl: layer.wmsUrl || "https://gis.hcgonline.co.in/geoserver/wms",
+              wmsUrl:
+                layer.wmsUrl || "https://gis.hcgonline.co.in/geoserver/wms",
             });
           }
         }
@@ -4046,6 +4048,19 @@ function App({ onBackToHome, onNavigateToDashboard }) {
           <Box
             sx={{ display: "flex", alignItems: "center", gap: 2, flexGrow: 1 }}
           >
+            <Box
+              component="img"
+              src={`${process.env.PUBLIC_URL}/assets/HCG-logo-1.png`}
+              alt="Mapgeoid City Gas Logo"
+              sx={{
+                width: "75px",
+                objectFit: "contain",
+                borderRadius: "8px",
+                background: "white",
+                padding: "3px",
+                boxShadow: "0 4px 12px rgba(59, 130, 246, 0.4)",
+              }}
+            />
             <Typography
               variant="h5"
               sx={{ fontWeight: "bold", color: "#f6f9f6ff" }}
@@ -4058,7 +4073,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
               sx={{ mx: 2, borderColor: "white" }}
             />
             <Typography variant="body2" sx={{ color: "#fefbfbff" }}>
-              City Gas Distribution
+              Haryana City Gas Distribution
             </Typography>
           </Box>
 
@@ -4482,7 +4497,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                                       {nestedLayer.name}
                                     </Typography>
                                     <img
-                                      src={`${nestedLayer.wmsUrl || "https://gis.hcgonline.co.in/geoserver/wms"}?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&LAYER=${nestedLayer.wmsLayer}`}
+                                      src={`${nestedLayer.wmsUrl || "https://gis.hcgonline.co.in/geoserver/wms"}?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&LAYER=${nestedLayer.wmsLayer}&scale=50`}
                                       alt={nestedLayer.name}
                                       style={{
                                         display: "block",
@@ -4510,7 +4525,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                                   {layer.name}
                                 </Typography>
                                 <img
-                                  src={`${layer.wmsUrl || "https://gis.hcgonline.co.in/geoserver/wms"}?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&LAYER=${layer.wmsLayer}`}
+                                  src={`${layer.wmsUrl || "https://gis.hcgonline.co.in/geoserver/wms"}?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&LAYER=${layer.wmsLayer}&scale=50`}
                                   alt={layer.name}
                                   style={{
                                     display: "block",
@@ -9472,7 +9487,7 @@ function App({ onBackToHome, onNavigateToDashboard }) {
                               {layer.name}
                             </Typography>
                             <img
-                              src={`${layer.wmsUrl}?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&LAYER=${layer.wmsLayer}&LEGEND_OPTIONS=fontName:Arial;fontSize:7`}
+                              src={`${layer.wmsUrl}?REQUEST=GetLegendGraphic&VERSION=1.0.0&FORMAT=image/png&LAYER=${layer.wmsLayer}&scale=50`}
                               alt={layer.name}
                               style={{
                                 display: "block",
@@ -10226,4 +10241,4 @@ if (typeof document !== "undefined") {
 // export default React.memo(App);
 export default React.memo(App);
 // export default App;
-// Final 
+// Final

@@ -29,8 +29,8 @@ import {
 } from "@mui/icons-material";
 
 // Import logos
-import hcgLogo from "./assets/logo.png";
-import mapgeoidLogo from "./assets/logo.png";
+// import hcgLogo from "./assets/HCG-logo-1.png";
+// import mapgeoidLogo from "./assets/logo.png";
 
 const NeonNetworkBackground = () => {
   useEffect(() => {
@@ -251,30 +251,28 @@ const HaryanaGasPortal = ({
     {
       icon: <Map sx={{ fontSize: 40 }} />,
       title: "Map View",
-      description:
-        "Lorem ipsum dolor sit amet consectetur adipiscing elit ullam",
-      onClick: onNavigateToMap, // ← Yeh line add karo
+      description: "Interactive map to view & analyze gas pipeline network",
+      onClick: onNavigateToMap,
     },
     {
       icon: <Dashboard sx={{ fontSize: 40 }} />,
       title: "Dashboard",
-      description:
-        "Lorem ipsum dolor sit amet consectetur adipiscing elit ullam",
+      description: "View live analytics, charts & KPIs of gas distribution",
       onClick: onNavigateToDashboard,
     },
     {
       icon: <People sx={{ fontSize: 40 }} />,
       title: "User Management",
       description:
-        "Lorem ipsum dolor sit amet consectetur adipiscing elit ullam",
+        "Manage portal users, assign roles & control access to GIS features and data layers.",
       onClick: onNavigateToUsers,
     },
     {
       icon: <Description sx={{ fontSize: 40 }} />,
-      title: "Report",
+      title: "Construction Management",
       description:
-        "Lorem ipsum dolor sit amet consectetur adipiscing elit ullam",
-      onClick: () => alert("Report coming soon"),
+        " ManagementTrack pipeline laying progress, monitor contractors & manage new connection work orders",
+      onClick: () => alert("Construction Management coming soon"),
     },
   ];
 
@@ -349,7 +347,7 @@ const HaryanaGasPortal = ({
   };
 
   return (
-    <>
+    <div style={{ height: "100vh", overflow: "hidden" }}>
       <style>
         {`
           @keyframes float {
@@ -402,10 +400,10 @@ const HaryanaGasPortal = ({
               {/* HCG Logo - Top Left */}
               <Box
                 component="img"
-                src={hcgLogo}
+                src={`${process.env.PUBLIC_URL}/assets/HCG-logo-1.png`}
                 alt="Mapgeoid City Gas Logo"
                 sx={{
-                  width: "30px",
+                  width: "75px",
                   objectFit: "contain",
                   borderRadius: "8px",
                   background: "white",
@@ -530,7 +528,7 @@ const HaryanaGasPortal = ({
                 WebkitTextFillColor: "transparent",
               }}
             >
-               City Gas GIS Portal
+              Haryana City Gas GIS Portal
             </Typography>
           </Box>
 
@@ -586,7 +584,7 @@ const HaryanaGasPortal = ({
             {/* MapGeoid Logo - Bottom Left */}
             <Box
               component="img"
-              src={mapgeoidLogo}
+              src={`${process.env.PUBLIC_URL}/assets/logo.png`}
               alt="MapGeoid Logo"
               sx={{
                 width: "40px",
@@ -683,7 +681,7 @@ const HaryanaGasPortal = ({
               >
                 <Box
                   component="img"
-                  src={hcgLogo}
+                  src="./assets/HCG-logo-1.png"
                   alt="HCG Logo"
                   sx={{
                     width: 300,
@@ -805,7 +803,6 @@ const HaryanaGasPortal = ({
                     variant="outlined"
                     required
                     disabled={loading}
-                    
                     sx={{
                       "& .MuiOutlinedInput-root": {
                         borderRadius: "8px",
@@ -932,7 +929,6 @@ const HaryanaGasPortal = ({
               >
                 <Close />
               </IconButton>
-
               <Box
                 sx={{
                   display: "flex",
@@ -942,7 +938,7 @@ const HaryanaGasPortal = ({
               >
                 <Box
                   component="img"
-                  src={hcgLogo}
+                  src="./assets/HCG-logo-1.png"
                   alt="HCG Logo"
                   sx={{
                     width: 100,
@@ -951,7 +947,6 @@ const HaryanaGasPortal = ({
                   }}
                 />
               </Box>
-
               <Typography
                 variant="h4"
                 sx={{
@@ -964,7 +959,6 @@ const HaryanaGasPortal = ({
               >
                 Forgot Password
               </Typography>
-
               <Typography
                 variant="body2"
                 sx={{
@@ -982,13 +976,11 @@ const HaryanaGasPortal = ({
                   {error}
                 </Alert>
               )}
-
               {success && (
                 <Alert severity="success" sx={{ marginBottom: "1rem" }}>
                   {success}
                 </Alert>
               )}
-
               <Box
                 component="form"
                 onSubmit={handleForgotPassword}
@@ -1105,11 +1097,12 @@ const HaryanaGasPortal = ({
                   </Typography>
                 </Box>
               </Box>
+              Developed by
             </Card>
           </Box>
         )}
       </Box>
-    </>
+    </div>
   );
 };
 export default React.memo(HaryanaGasPortal);

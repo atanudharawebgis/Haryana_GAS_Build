@@ -17,11 +17,11 @@ import TileWMS from "ol/source/TileWMS";
 import OSM from "ol/source/OSM";
 import { fromLonLat } from "ol/proj";
 import "ol/ol.css";
+import hcgLogo from "./assets/HCG-logo-1.png";
 
 // ============================================================
 // GEOSERVER CONFIG  (same as App.jsx)
 // ============================================================
-const API_BASE = "https://gis.hcgonline.co.in/api/v1";
 const GS_WFS = "https://gis.hcgonline.co.in/geoserver/wfs";
 const GS_WMS = "https://gis.hcgonline.co.in/geoserver/wms";
 
@@ -101,7 +101,7 @@ const LAYERS = {
     border: "#e9d5ff",
   },
   cng_station: {
-    label: "MDPE Valve ",
+    label: "Gas Valve",
     wms: "haryanagas:cng_station",
     type: "count",
     unit: "",
@@ -161,7 +161,7 @@ const LAYERS = {
     border: "#ddd6fe",
   },
   connection_pit: {
-    label: "TF",
+    label: "TLP",
     wms: "haryanagas:connection_pit",
     type: "count",
     unit: "",
@@ -171,7 +171,7 @@ const LAYERS = {
     border: "#bae6fd",
   },
   dispenser: {
-    label: "dispenser",
+    label: "TF",
     wms: "haryanagas:dispenser",
     type: "count",
     unit: "",
@@ -191,7 +191,7 @@ const LAYERS = {
     border: "#fecaca",
   },
   electric_pole: {
-    label: "Electric Pole",
+    label: "Compressor",
     wms: "haryanagas:electric_pole",
     type: "count",
     unit: "",
@@ -201,7 +201,7 @@ const LAYERS = {
     border: "#fde68a",
   },
   pole_marker: {
-    label: "Pole Marker",
+    label: "Dispensor",
     wms: "haryanagas:rcc_marker",
     type: "count",
     unit: "",
@@ -593,121 +593,57 @@ export default function Dashboard({ onNavigateToMap, onBackToHome }) {
   const [lastUpdated, setLastUpdated] = useState(null);
   const [gaList, setGaList] = useState([]);
   const [caList, setCaList] = useState([]);
-  const [selectedGA, setSelectedGA] = useState("1");
+  const [selectedGA, setSelectedGA] = useState("ALL");
   const [selectedCA, setSelectedCA] = useState("ALL");
 
   // GA list fetch
   useEffect(() => {
-    (async () => {
-      try {
-        const data = await (await fetch(`${API_BASE}/ga_boundary`)).json();
-        const list = Object.entries(data)
-          .map(([id, name]) => ({ id, name }))
-          .filter((ga) => ga.id === "1"); // ← sirf ID=1 rakho
-        setGaList(list);
-      } catch {
-        setGaList([]);
-      }
-    })();
+    setGaList(["Gurugram", "Faridabad", "Panipat"]);
   }, []);
 
   // CA list fetch jab GA change ho
   useEffect(() => {
-    if (!selectedGA || selectedGA === "ALL") {
+    if (selectedGA === "ALL") {
       setCaList([]);
       setSelectedCA("ALL");
       return;
     }
-    (async () => {
-      try {
-        const data = await (
-          await fetch(`${API_BASE}/ca_boundary?ga_boundary_id=${selectedGA}`)
-        ).json();
-        const list = data
-          ? Object.entries(data).map(([id, name]) => ({ id, name }))
-          : [];
-        setCaList(list);
-        setSelectedCA("ALL");
-      } catch {
-        setCaList([]);
-      }
-    })();
+    setCaList(["Zone A", "Zone B", "Zone C"]);
+    setSelectedCA("ALL");
   }, [selectedGA]);
 
   // ── fetch main stats ──────────────────────────────────────
   const fetchStats = useCallback(async () => {
     setLoading(true);
-    setChartLoad(true);
-    const params = new URLSearchParams();
-    if (selectedGA !== "ALL") params.set("ga_boundary_id", selectedGA);
-    if (selectedCA !== "ALL") params.set("ca_boundary_id", selectedCA);
-
-    let data;
-    try {
-      data = await (
-        await fetch(`${API_BASE}/dashboard_summary?${params}`)
-      ).json();
-    } catch (err) {
-      console.error("API fetch failed:", err);
-      setLoading(false);
-      setChartLoad(false);
-      return;
-    }
-
-    setStats({
-      steel_pipelines: parseFloat(data.steel_pipeline_km),
-      dpngsurvey: parseInt(data.cng_station_count),
-      house: parseInt(data.house_count),
-      ci: parseInt(data.industrial_customer_count),
-      cng_station: parseInt(data.mdpe_valve_count),
-      mdpe_pipelines: parseFloat(data.mdpe_pipeline_km),
-      tlp: parseInt(data.tlp_count),
-      compressor: parseInt(data.compressor_count),
-      dispenser: parseInt(data.dispensor_count),
-      connection_pit: parseInt(data.tf_count ?? 0),
-      odorizer: parseInt(data.drs_count ?? 0),
-    });
-
-    // Bargraph data bhi API se parse karo
-    const steelRaw = data.steel_pipeline_bargraph
-      ? JSON.parse(data.steel_pipeline_bargraph)
-      : [];
-    const mdpeRaw = data.mdpe_pipeline_bargraph
-      ? JSON.parse(data.mdpe_pipeline_bargraph)
-      : [];
-
-    const steelColors = ["#fca5a5", "#f87171", "#ef4444", "#e11d48", "#b91c1c"];
-    const mdpeColors = ["#bfdbfe", "#60a5fa", "#3b82f6", "#2563eb", "#1d4ed8"];
-
-    setSteelChart(
-      steelRaw.map((d, i) => ({
-        label: d.key,
-        value: d.value,
-        color: steelColors[i] ?? "#dc2626",
-      })),
-    );
-    setSteelChart(
-      (steelRaw ?? []).map((d, i) => ({
-        label: d.key,
-        value: d.value,
-        color: steelColors[i] ?? "#dc2626",
-      })),
-    );
-    setMdpeChart(
-      (mdpeRaw ?? []).map((d, i) => ({
-        label: d.key,
-        value: d.value,
-        color: mdpeColors[i] ?? "#0891b2",
-      })),
-    );
+    const result = {};
+await Promise.all(
+  Object.entries(LAYERS).map(async ([key, cfg]) => {
+    result[key] = cfg.type === "length"
+      ? await fetchLength(cfg.wms)
+      : await fetchCount(cfg.wms);
+  })
+);
+setStats(result);
     setLoading(false);
-    setChartLoad(false);
     setLastUpdated(new Date().toLocaleTimeString("en-IN"));
   }, [selectedGA, selectedCA]);
 
   // ── fetch chart data ──────────────────────────────────────
   const fetchCharts = useCallback(async () => {
-    // bargraph ab fetchStats mein handle ho raha hai
+    setChartLoad(true);
+    setSteelChart([
+      { label: '2"', color: "#fca5a5", value: 320 },
+      { label: '4"', color: "#f87171", value: 180 },
+      { label: '6"', color: "#ef4444", value: 95 },
+      { label: '12"', color: "#b91c1c", value: 40 },
+    ]);
+    setMdpeChart([
+      { label: "32", color: "#bfdbfe", value: 410 },
+      { label: "63", color: "#60a5fa", value: 280 },
+      { label: "90", color: "#3b82f6", value: 150 },
+      { label: "125", color: "#1d4ed8", value: 60 },
+    ]);
+    setChartLoad(false);
   }, []);
 
   useEffect(() => {
@@ -744,7 +680,7 @@ export default function Dashboard({ onNavigateToMap, onBackToHome }) {
       <div style={TOPBAR}>
         <div style={{ display: "flex", alignItems: "center", gap: 12 }}>
           <img
-            src={`${process.env.PUBLIC_URL}/assets/HCG-logo-1.png`}
+            src={hcgLogo}
             alt="HCG"
             style={{
               height: 20,
@@ -829,9 +765,9 @@ export default function Dashboard({ onNavigateToMap, onBackToHome }) {
                     <div>
                       <div
                         style={{
-                          fontSize: 13,
-                          color: "#0e0f0f",
-                          fontWeight: 900,
+                          fontSize: 10,
+                          color: "#2d5282",
+                          fontWeight: 600,
                           textTransform: "uppercase",
                           letterSpacing: "0.5px",
                           marginBottom: 6,
@@ -902,17 +838,17 @@ export default function Dashboard({ onNavigateToMap, onBackToHome }) {
               {/* Steel bar chart */}
               <div style={CHART_CARD}>
                 <div style={CHART_TITLE}>
-                  Steel Pipeline
+                  Steel Pipeline Bargraph
                   <br />
                   <span
                     style={{
-                      color: "#818386",
+                      color: "#9ca3af",
                       textTransform: "none",
                       letterSpacing: 0,
-                      fontWeight: 700,
+                      fontWeight: 400,
                     }}
                   >
-                    Dia Wise
+                    by Diameter
                   </span>
                 </div>
                 {chartLoad ? (
@@ -926,12 +862,12 @@ export default function Dashboard({ onNavigateToMap, onBackToHome }) {
                       >
                         <XAxis
                           dataKey="label"
-                          tick={{ fontSize: 11, fill: "#000000" }}
+                          tick={{ fontSize: 10, fill: "#475569" }}
                           axisLine={false}
                           tickLine={false}
                         />
                         <YAxis
-                          tick={{ fontSize: 11, fill: "#000000" }}
+                          tick={{ fontSize: 9, fill: "#475569" }}
                           axisLine={false}
                           tickLine={false}
                         />
@@ -978,7 +914,6 @@ export default function Dashboard({ onNavigateToMap, onBackToHome }) {
                   Haryana Gas Network
                 </span>
                 <div style={{ display: "flex", alignItems: "center", gap: 6 }}>
-                  {/* {gaList.length > 1 && ( */}
                   <select
                     value={selectedGA}
                     onChange={(e) => {
@@ -998,38 +933,40 @@ export default function Dashboard({ onNavigateToMap, onBackToHome }) {
                   >
                     <option value="ALL">All GA</option>
                     {gaList.map((ga) => (
-                      <option key={ga.id} value={ga.id}>
-                        Gurgaon
+                      <option key={ga} value={ga}>
+                        {ga}
                       </option>
                     ))}
                   </select>
 
-                  <select
-                    value={selectedCA}
-                    onChange={(e) => setSelectedCA(e.target.value)}
-                    style={{
-                      fontSize: 15,
-                      padding: "4px 8px",
-                      borderRadius: 6,
-                      border: "1px solid #bfdbfe",
-                      color: "#1e3a5f",
-                      background: "#fff",
-                      cursor: "pointer",
-                      minWidth: 120,
-                    }}
-                  >
-                    <option value="ALL">All CA</option>
-                    {(caList ?? []).map((ca) => (
-                      <option key={ca.id} value={ca.id}>
-                        {ca.name}
-                      </option>
-                    ))}
-                  </select>
+                  {selectedGA !== "ALL" && (
+                    <select
+                      value={selectedCA}
+                      onChange={(e) => setSelectedCA(e.target.value)}
+                      style={{
+                        fontSize: 15,
+                        padding: "4px 8px",
+                        borderRadius: 6,
+                        border: "1px solid #bfdbfe",
+                        color: "#1e3a5f",
+                        background: "#fff",
+                        cursor: "pointer",
+                        minWidth: 120,
+                      }}
+                    >
+                      <option value="ALL">All CA</option>
+                      {caList.map((ca) => (
+                        <option key={ca} value={ca}>
+                          {ca}
+                        </option>
+                      ))}
+                    </select>
+                  )}
 
                   {(selectedGA !== "ALL" || selectedCA !== "ALL") && (
                     <button
                       onClick={() => {
-                        setSelectedGA("1");
+                        setSelectedGA("ALL");
                         setSelectedCA("ALL");
                       }}
                       style={{
@@ -1080,17 +1017,17 @@ export default function Dashboard({ onNavigateToMap, onBackToHome }) {
               {/* MDPE bar chart */}
               <div style={CHART_CARD}>
                 <div style={CHART_TITLE}>
-                  MDPE Pipeline
+                  MDPE Pipeline Bargraph
                   <br />
                   <span
                     style={{
-                      color: "#818386",
+                      color: "#9ca3af",
                       textTransform: "none",
                       letterSpacing: 0,
-                      fontWeight: 700,
+                      fontWeight: 400,
                     }}
                   >
-                    Dia Wise
+                    by Diameter (mm)
                   </span>
                 </div>
                 {chartLoad ? (
@@ -1104,12 +1041,12 @@ export default function Dashboard({ onNavigateToMap, onBackToHome }) {
                       >
                         <XAxis
                           dataKey="label"
-                          tick={{ fontSize: 11, fill: "#09090a" }}
+                          tick={{ fontSize: 10, fill: "#6b7280" }}
                           axisLine={false}
                           tickLine={false}
                         />
                         <YAxis
-                          tick={{ fontSize: 11, fill: "#09090a" }}
+                          tick={{ fontSize: 9, fill: "#9ca3af" }}
                           axisLine={false}
                           tickLine={false}
                         />
@@ -1137,10 +1074,11 @@ export default function Dashboard({ onNavigateToMap, onBackToHome }) {
             }}
           >
             {[
-              "tlp",
               "connection_pit",
-              "compressor",
               "dispenser",
+              // "cgs",
+              "electric_pole",
+              "pole_marker",
               "odorizer",
             ].map((k) => {
               const cfg = LAYERS[k];
@@ -1157,9 +1095,9 @@ export default function Dashboard({ onNavigateToMap, onBackToHome }) {
                 >
                   <div
                     style={{
-                      fontSize: 13,
-                      color: "#0b0b0c",
-                      fontWeight: 900,
+                      fontSize: 10,
+                      color: "#2d5282",
+                      fontWeight: 600,
                       textTransform: "uppercase",
                       letterSpacing: "0.5px",
                       marginBottom: 4,
@@ -1248,8 +1186,8 @@ const CHART_CARD = {
   minHeight: 0,
 };
 const CHART_TITLE = {
-  fontSize: 15,
-  fontWeight: 900,
+  fontSize: 10,
+  fontWeight: 700,
   color: "#2d5282",
   marginBottom: 8,
   textTransform: "uppercase",
